@@ -19,7 +19,7 @@ namespace DemoPuissance4.Hubs
         public void Create()
         {
             // Récupérer access_token dans la requête
-            string player = Context.GetHttpContext().Request.Query["access_token"];
+            string player = Context.GetHttpContext()!.Request.Query["access_token"];
             Game game = _gameService.Create(player);
             _games.Add(game);
             // Envoyer l'info à tous les clients
@@ -45,6 +45,18 @@ namespace DemoPuissance4.Hubs
         // A la déconnexion
         public override Task OnDisconnectedAsync(Exception? exception)
         {
+            // Récupérer access_token dans la requête
+            string player = Context.GetHttpContext()!.Request.Query["access_token"];
+            Game? game = _games.FirstOrDefault(game => game.Player1 == player || game.Player2 == player);
+            if (game != null)
+            {
+                // si un player quitte la partie est supprimée
+                _games.Remove(game);
+            }
+
+            // todo: envoyer une notif au groupe
+            Clients.All.SendAsync("allTables", _games);
+
             return base.OnDisconnectedAsync(exception);
         }
 
